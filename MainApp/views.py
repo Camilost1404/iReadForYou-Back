@@ -3,6 +3,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from Backend.settings import MEDIA_ROOT, MEDIA_URL
 
+from MainApp.models import Audio
+
 import cv2
 from gtts import gTTS
 import pytesseract
@@ -62,3 +64,32 @@ def procesar_imagen(request):
 
         # Devolver la URL del archivo de audio en formato JSON
         return JsonResponse({'audio_url': audio_url})
+
+@csrf_exempt
+def guardar_audio(request):
+
+    if request.method == 'POST':
+
+        audio = request.POST.get('audio')
+        name = request.POST.get('name')
+        id_user = request.POST.get('id_user')
+
+        # Ruta del archivo
+        ruta_archivo = os.path.join(MEDIA_ROOT, 'audio', audio)
+
+        # Verificar si el archivo existe
+        if os.path.isfile(ruta_archivo):
+
+            # Crear un objeto Audio con los datos del formulario
+            nuevo_audio = Audio(name=name, user_id=id_user, audio=audio)
+            nuevo_audio.save()
+
+            # Devolver respuesta exitosa
+            return JsonResponse({'status': 'success', 'message': 'Audio guardado con exito'})
+
+        else:
+            # Devolver respuesta de error
+            return JsonResponse({'status': 'error', 'message': 'El audio no existe'})
+
+    # Devolver respuesta de error en caso de que no sea una petición POST
+    return JsonResponse({'status': 'error', 'message': 'Petición inválida'})

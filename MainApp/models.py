@@ -63,6 +63,7 @@ class User(AbstractBaseUser):
 
 class Audio(models.Model):
     user = models.ForeignKey(User, verbose_name=_("Usuario"), on_delete=models.CASCADE)
-    name_audio = models.CharField(_("Nombre Audio"), max_length=150)
+    name = models.CharField(_("Nombre Audio"), max_length=150)
+    audio = models.CharField(_("Audio"), max_length=150)
     created_at = models.DateTimeField(_("Creado"), auto_now_add=True, max_length=0)
 
