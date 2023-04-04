@@ -132,6 +132,6 @@ AUTH_USER_MODEL = 'MainApp.User'
 
 # Media Folder
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'MainApp','media')
 
 MEDIA_URL = '/media/'
