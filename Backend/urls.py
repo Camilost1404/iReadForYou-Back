@@ -22,7 +22,8 @@ from MainApp import views
 urlpatterns = [
     # path('admin/', admin.site.urls),
     path('procesar_imagen', views.procesar_imagen, name="procesar_imagen"),
-    path('guardar_audio', views.guardar_audio, name='guardar_audio')
+    path('guardar_audio', views.guardar_audio, name='guardar_audio'),
+    path('cambiar_tono', views.cambiarTono,name ='cambiar_tono')
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
