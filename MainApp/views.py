@@ -3,6 +3,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 from Backend.settings import MEDIA_ROOT, MEDIA_URL
 from MainApp.models import Audio
+from textblob import TextBlob
+from langdetect import detect
 
 import torchaudio
 import cv2
@@ -11,6 +13,7 @@ import pytesseract
 import os
 import numpy as np
 import uuid
+
 
 # Define una función para extraer texto de una imagen
 
@@ -60,11 +63,24 @@ def procesar_imagen(request):
         try:
          text = extraer_texto(image_data)
          if text != None:
-         # Generar archivo de audio y obtener la URL
-          audio_url = generar_audio(text)
-          
-          # Devolver la URL del archivo de audio en formato JSON
-          return JsonResponse({'audio_url': audio_url})
+            # Detectar el idioma en el que esta el texto
+            deteccion = detect(text)
+            if deteccion == 'en':
+                 blob = TextBlob(text)
+                 # Traduce desde el ingles hacia el español
+                 blob= blob.translate(from_lang='en',to='es')
+                 # Convierte en string la traduccion que esta en la variable blob y se la da a text
+                 text= str(blob)
+                 # Generar audio
+                 audio_url = generar_audio(text)
+                 # Devolver la URL del archivo de audio en formato JSON
+                 return JsonResponse({'audio_url': audio_url})
+            elif deteccion =='es':
+               audio_url = generar_audio(text)
+               # Devolver la URL del archivo de audio en formato JSON
+               return JsonResponse({'audio_url': audio_url})
+            else:
+               return JsonResponse({'status': 'error', 'message': 'El lenguaje en el que se encuentra el texto no es admitido'})
 
         except:
          print('No hay texto en la imagen')
@@ -129,4 +145,3 @@ def cambiarTono(request):
      # Guardar el archivo de audio modificado
      torchaudio.save(ruta, audio_changed_tone, sample_rate)
      return JsonResponse({'status': 'success', 'message': 'Tono Convertido'})
-   
