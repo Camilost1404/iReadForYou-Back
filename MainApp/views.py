@@ -5,31 +5,38 @@ from Backend.settings import MEDIA_ROOT, MEDIA_URL
 
 from MainApp.models import Audio
 
-import cv2
+# import cv2
 from gtts import gTTS
 import pytesseract
 import os
-import numpy as np
+# import numpy as np
 import uuid
+import base64
+from PIL import Image
+import io
+
 
 # Define una función para extraer texto de una imagen
-
-
 def extraer_texto(image_data):
 
-    # Convierte los bytes de la imagen a un array numpy
-    nparr = np.frombuffer(image_data.read(), np.uint8)
-    # Decodifica la imagen y carga en OpenCV
-    imagen = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    # Decodificar la imagen desde base64
+    imagen = base64.b64decode(image_data)
+
+    # Convierte los bytes de la imagen a un objeto Image de Pillow
+    imagen = Image.open(io.BytesIO(imagen))
+
+    # Redimensionar la imagen si es necesario
+    width, height = imagen.size
+    if width > 1000:
+        imagen = imagen.resize((int(width / 2), int(height / 2)))
 
     # Extrae texto de la imagen utilizando tesseract OCR
-    text = pytesseract.image_to_string(imagen)
+    text = pytesseract.image_to_string(imagen, lang='spa_old')
 
     return text
 
+
 # Define una función para generar audio a partir de texto
-
-
 def generar_audio(text):
 
     # Generar un identificador único
@@ -46,15 +53,15 @@ def generar_audio(text):
 
     return audio_url
 
+
 # Define la vista que procesa la imagen y devuelve la URL del audio generado
-
-
 @csrf_exempt
 def procesar_imagen(request):
 
     if request.method == 'POST':
+
         # Obtener la imagen del cuerpo de la solicitud
-        image_data = request.FILES.get('image_data')
+        image_data = request.POST.get('image_data')
 
         # Extraer texto de la imagen
         text = extraer_texto(image_data)
@@ -63,7 +70,11 @@ def procesar_imagen(request):
         audio_url = generar_audio(text)
 
         # Devolver la URL del archivo de audio en formato JSON
-        return JsonResponse({'audio_url': audio_url})
+        return JsonResponse({
+            'audio_url': audio_url,
+            'texto': text,
+        })
+
 
 @csrf_exempt
 def guardar_audio(request):
