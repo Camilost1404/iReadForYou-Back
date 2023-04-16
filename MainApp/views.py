@@ -1,11 +1,13 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from Backend.settings import MEDIA_ROOT, MEDIA_URL
-
 from MainApp.models import Audio
 
+from textblob import TextBlob
+from langdetect import detect
 # import cv2
+import torchaudio
 from gtts import gTTS
 import pytesseract
 import os
@@ -44,7 +46,7 @@ def generar_audio(text):
 
     # Genera un archivo de audio utilizando gTTS
     tts = gTTS(text=text, lang='es')
-    audio_file = f'audio_{identificador_unico}.mp3'
+    audio_file = f'audio_{identificador_unico}.wav'
     audio_path = os.path.join(MEDIA_ROOT, 'audio', audio_file)
     tts.save(audio_path)
 
@@ -64,16 +66,44 @@ def procesar_imagen(request):
         image_data = request.POST.get('image_data')
 
         # Extraer texto de la imagen
-        text = extraer_texto(image_data)
+        try:
+            text = extraer_texto(image_data)
+            if text != None:
+                # Detectar el idioma en el que esta el texto
+                deteccion = detect(text)
+                if deteccion == 'en':
 
-        # Generar archivo de audio y obtener la URL
-        audio_url = generar_audio(text)
+                    blob = TextBlob(text)
+                    # Traduce desde el ingles hacia el español
+                    blob = blob.translate(from_lang='en', to='es')
+                    # Convierte en string la traduccion que esta en la variable blob y se la da a text
+                    text = str(blob)
+                    # Generar audio
+                    audio_url = generar_audio(text)
 
-        # Devolver la URL del archivo de audio en formato JSON
-        return JsonResponse({
-            'audio_url': audio_url,
-            'texto': text,
-        })
+                    # Devolver la URL del archivo de audio en formato JSON
+                    return JsonResponse({
+                        'audio_url': audio_url,
+                        'texto': text,
+                    })
+
+                elif deteccion == 'es':
+
+                    audio_url = generar_audio(text)
+
+                    # Devolver la URL del archivo de audio en formato JSON
+                    return JsonResponse({
+                        'audio_url': audio_url,
+                        'texto': text,
+                    })
+
+                else:
+
+                    return JsonResponse({'status': 'error', 'message': 'El lenguaje en el que se encuentra el texto no es admitido'})
+
+        except:
+
+            return JsonResponse({'status': 'error', 'message': 'No hay texto en la imagen'})
 
 
 @csrf_exempt
@@ -104,3 +134,35 @@ def guardar_audio(request):
 
     # Devolver respuesta de error en caso de que no sea una petición POST
     return JsonResponse({'status': 'error', 'message': 'Petición inválida'})
+
+
+@csrf_exempt
+def cambiarTono(request):
+
+    if request.method == 'POST':
+
+        data_audio = request.POST.get('data_audio')
+        tono = request.POST.get('tono')
+
+        print(os.path.join(MEDIA_ROOT, 'audio'))
+
+        # Cargar el archivo de audio
+        audio, sample_rate = torchaudio.load(os.path.join(MEDIA_ROOT, 'audio', data_audio))
+
+        if tono == 'agudo':
+            # Definir el factor de cambio de tono
+            factor = -0.1  # reducir el tono a la mitad
+
+            # Cambiar el tono del audio
+            audio_changed_tone = torchaudio.transforms.Resample(sample_rate, int(sample_rate*(1+factor)))(audio)
+        elif tono == 'grave':
+            # Definir el factor de cambio de tono
+            factor = 0.1  # reducir el tono a la mitad
+            # Cambiar el tono del audio
+
+            audio_changed_tone = torchaudio.transforms.Resample(
+                sample_rate, int(sample_rate*(1+factor)))(audio)
+        ruta = os.path.join(MEDIA_ROOT, 'audio', data_audio)
+        # Guardar el archivo de audio modificado
+        torchaudio.save(ruta, audio_changed_tone, sample_rate)
+        return JsonResponse({'status': 'success', 'message': 'Tono Convertido'})
