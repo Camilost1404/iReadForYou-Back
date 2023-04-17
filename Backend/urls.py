@@ -18,12 +18,18 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from MainApp import views
+from rest_framework_simplejwt import views as jwt_views
+
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
     path('procesar_imagen', views.procesar_imagen, name="procesar_imagen"),
     path('guardar_audio', views.guardar_audio, name='guardar_audio'),
-    path('cambiar_tono', views.cambiarTono,name ='cambiar_tono')
+    path('cambiar_tono', views.cambiarTono,name ='cambiar_tono'),
+    path('token/', jwt_views.TokenObtainPairView.as_view(), name ='token_obtain_pair'),
+    path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name ='token_refresh'),
+    path('inicio/', views.HomeView.as_view(), name ='inicio')
+    
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

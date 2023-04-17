@@ -5,6 +5,9 @@ from Backend.settings import MEDIA_ROOT, MEDIA_URL
 from MainApp.models import Audio
 from textblob import TextBlob
 from langdetect import detect
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 import torchaudio
 import cv2
@@ -145,3 +148,23 @@ def cambiarTono(request):
      # Guardar el archivo de audio modificado
      torchaudio.save(ruta, audio_changed_tone, sample_rate)
      return JsonResponse({'status': 'success', 'message': 'Tono Convertido'})
+  
+
+class HomeView(APIView):
+     
+   permission_classes = (IsAuthenticated, )
+   def get(self, request):
+     content = {'message': 'Sirve'}
+     return Response(content)
+   
+# class LogoutView(APIView):
+#      permission_classes = (IsAuthenticated,)
+#      def post(self, request):
+          
+#           try:
+#                refresh_token = request.data["refresh_token"]
+#                token = RefreshToken(refresh_token)
+#                token.blacklist()
+#                return Response(status=status.HTTP_205_RESET_CONTENT)
+#           except Exception as e:
+#                return Response(status=status.HTTP_400_BAD_REQUEST)   

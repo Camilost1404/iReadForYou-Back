@@ -67,3 +67,4 @@ class Audio(models.Model):
     audio = models.CharField(_("Audio"), max_length=150)
     created_at = models.DateTimeField(_("Creado"), auto_now_add=True, max_length=0)
 
+# a = User(name='edwin',last_name='alzate', email = 'edwin@gmail.com',password =12345678)
