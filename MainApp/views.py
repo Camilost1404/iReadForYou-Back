@@ -6,7 +6,12 @@ from MainApp.models import Audio
 
 from textblob import TextBlob
 from langdetect import detect
-# import cv2
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
+
 import torchaudio
 from gtts import gTTS
 import pytesseract
@@ -147,14 +152,16 @@ def cambiarTono(request):
         print(os.path.join(MEDIA_ROOT, 'audio'))
 
         # Cargar el archivo de audio
-        audio, sample_rate = torchaudio.load(os.path.join(MEDIA_ROOT, 'audio', data_audio))
+        audio, sample_rate = torchaudio.load(
+            os.path.join(MEDIA_ROOT, 'audio', data_audio))
 
         if tono == 'agudo':
             # Definir el factor de cambio de tono
             factor = -0.1  # reducir el tono a la mitad
 
             # Cambiar el tono del audio
-            audio_changed_tone = torchaudio.transforms.Resample(sample_rate, int(sample_rate*(1+factor)))(audio)
+            audio_changed_tone = torchaudio.transforms.Resample(
+                sample_rate, int(sample_rate*(1+factor)))(audio)
         elif tono == 'grave':
             # Definir el factor de cambio de tono
             factor = 0.1  # reducir el tono a la mitad
@@ -166,3 +173,17 @@ def cambiarTono(request):
         # Guardar el archivo de audio modificado
         torchaudio.save(ruta, audio_changed_tone, sample_rate)
         return JsonResponse({'status': 'success', 'message': 'Tono Convertido'})
+
+
+class LogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+
+        try:
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
