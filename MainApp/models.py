@@ -66,4 +66,3 @@ class Audio(models.Model):
     name = models.CharField(_("Nombre Audio"), max_length=150)
     audio = models.CharField(_("Audio"), max_length=150)
     created_at = models.DateTimeField(_("Creado"), auto_now_add=True, max_length=0)
-
