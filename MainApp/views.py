@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from Backend.settings import MEDIA_ROOT, MEDIA_URL
-from MainApp.models import Audio
+from MainApp.models import Audio, User
 
 from textblob import TextBlob
 from langdetect import detect
@@ -123,6 +123,8 @@ def guardar_audio(request):
         # Ruta del archivo
         ruta_archivo = os.path.join(MEDIA_ROOT, 'audio', audio)
 
+        print(ruta_archivo)
+
         # Verificar si el archivo existe
         if os.path.isfile(ruta_archivo):
 
@@ -187,3 +189,19 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserInfo(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+
+        user = User.objects.filter(email=request.user)
+
+        # convert QuerySet to list of dictionaries
+        users_list = list(user.values())
+
+        return JsonResponse({
+            'user': users_list
+        }, status=status.HTTP_200_OK)
