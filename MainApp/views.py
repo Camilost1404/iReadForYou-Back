@@ -123,8 +123,6 @@ def guardar_audio(request):
         # Ruta del archivo
         ruta_archivo = os.path.join(MEDIA_ROOT, 'audio', audio)
 
-        print(ruta_archivo)
-
         # Verificar si el archivo existe
         if os.path.isfile(ruta_archivo):
 
@@ -151,8 +149,6 @@ def cambiarTono(request):
         data_audio = request.POST.get('data_audio')
         tono = request.POST.get('tono')
 
-        print(os.path.join(MEDIA_ROOT, 'audio'))
-
         # Cargar el archivo de audio
         audio, sample_rate = torchaudio.load(
             os.path.join(MEDIA_ROOT, 'audio', data_audio))
@@ -175,6 +171,13 @@ def cambiarTono(request):
         # Guardar el archivo de audio modificado
         torchaudio.save(ruta, audio_changed_tone, sample_rate)
         return JsonResponse({'status': 'success', 'message': 'Tono Convertido'})
+
+
+@csrf_exempt
+def mostrar_audios(request):
+    id_user = request.GET.get('id_user')
+    audios = list(Audio.objects.filter(user_id=id_user).values())
+    return JsonResponse(audios, safe=False)
 
 
 class LogoutView(APIView):
@@ -205,3 +208,23 @@ class UserInfo(APIView):
         return JsonResponse({
             'user': users_list
         }, status=status.HTTP_200_OK)
+
+
+class UserRegister(APIView):
+
+    def post(self, request):
+        name = request.data['name']
+        password = request.data['password']
+        email = request.data['email']
+        last_name = request.data['last_name']
+        try:
+            user = User.objects.create_user(
+                name=name, password=password, email=email, last_name=last_name)
+            refresh = RefreshToken.for_user(user)
+            data = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+            return Response(data)
+        except:
+            return Response({'error': 'Error al crear usuario'})

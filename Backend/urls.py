@@ -29,7 +29,9 @@ urlpatterns = [
     path('token/', jwt_views.TokenObtainPairView.as_view(), name ='token_obtain_pair'),
     path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name ='token_refresh'),
     path('logout/', views.LogoutView.as_view(), name ='logout'),
+    path('register/', views.UserRegister.as_view(), name ='register'),
     path('user/', views.UserInfo.as_view(), name ='user'),
+    path('ver_audios', views.mostrar_audios, name='ver_audios')
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
