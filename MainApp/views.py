@@ -13,7 +13,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 
 import torchaudio
-from gtts import gTTS
+# from gtts import gTTS
+import speech_recognition as sr
+import pyttsx3
 import pytesseract
 import os
 # import numpy as np
@@ -50,10 +52,11 @@ def generar_audio(text):
     identificador_unico = str(uuid.uuid4())
 
     # Genera un archivo de audio utilizando gTTS
-    tts = gTTS(text=text, lang='es')
+    tts = pyttsx3.init()
     audio_file = f'audio_{identificador_unico}.wav'
     audio_path = os.path.join(MEDIA_ROOT, 'audio', audio_file)
-    tts.save(audio_path)
+    tts.save_to_file(text, audio_path)
+    tts.runAndWait()
 
     # Devuelve la URL del archivo de audio
     audio_url = os.path.join(MEDIA_URL, 'audio', audio_file).replace("\\", "/")
@@ -167,6 +170,7 @@ def cambiarTono(request):
 
             audio_changed_tone = torchaudio.transforms.Resample(
                 sample_rate, int(sample_rate*(1+factor)))(audio)
+
         ruta = os.path.join(MEDIA_ROOT, 'audio', data_audio)
         # Guardar el archivo de audio modificado
         torchaudio.save(ruta, audio_changed_tone, sample_rate)
@@ -228,3 +232,26 @@ class UserRegister(APIView):
             return Response(data)
         except:
             return Response({'error': 'Error al crear usuario'})
+
+
+@csrf_exempt
+def audio_especifico(request):
+
+    if request.method == 'GET':
+
+        id_audio = request.GET.get('id_audio')
+
+        audio = Audio.objects.filter(
+            id=id_audio).values_list('audio', flat=True)
+
+        ruta_audio = os.path.join(MEDIA_ROOT, 'audio', audio[0])
+
+        print(ruta_audio)
+
+        speech = sr.Recognizer()
+
+        with sr.AudioFile(ruta_audio) as source:
+            audio_data = speech.record(source)
+            text = speech.recognize_google(audio_data)
+
+        print(text)

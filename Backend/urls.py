@@ -31,7 +31,8 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name ='logout'),
     path('register/', views.UserRegister.as_view(), name ='register'),
     path('user/', views.UserInfo.as_view(), name ='user'),
-    path('ver_audios', views.mostrar_audios, name='ver_audios')
+    path('ver_audios', views.mostrar_audios, name='ver_audios'),
+    path('audio_especifico', views.audio_especifico, name='audio_especifico'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
