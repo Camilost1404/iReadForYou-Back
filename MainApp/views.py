@@ -123,6 +123,11 @@ def guardar_audio(request):
         name = request.POST.get('name')
         id_user = request.POST.get('id_user')
 
+        if '-modificado' in audio:
+
+            audio.split('-modificado')[0]
+            audio = f'{audio}.wav'
+
         # Ruta del archivo
         ruta_archivo = os.path.join(MEDIA_ROOT, 'audio', audio)
 
@@ -171,10 +176,20 @@ def cambiarTono(request):
             audio_changed_tone = torchaudio.transforms.Resample(
                 sample_rate, int(sample_rate*(1+factor)))(audio)
 
+        if 'modificado' not in data_audio:
+            data_audio = data_audio.split('.')[0]
+            data_audio += '-modificado.wav'
+
         ruta = os.path.join(MEDIA_ROOT, 'audio', data_audio)
+
+        # Devuelve la URL del archivo de audio
+        audio_url = os.path.join(
+            MEDIA_URL, 'audio', data_audio).replace("\\", "/")
+
         # Guardar el archivo de audio modificado
         torchaudio.save(ruta, audio_changed_tone, sample_rate)
-        return JsonResponse({'status': 'success', 'message': 'Tono Convertido'})
+
+        return JsonResponse({'audio_url': audio_url, })
 
 
 @csrf_exempt
@@ -246,12 +261,15 @@ def audio_especifico(request):
 
         ruta_audio = os.path.join(MEDIA_ROOT, 'audio', audio[0])
 
-        print(ruta_audio)
-
         speech = sr.Recognizer()
 
         with sr.AudioFile(ruta_audio) as source:
             audio_data = speech.record(source)
-            text = speech.recognize_google(audio_data)
+            text = speech.recognize_google(audio_data, language='es')
 
-        print(text)
+        audio_url = os.path.join(MEDIA_URL, 'audio', audio[0]).replace("\\", "/")
+
+        return JsonResponse({
+            'audio_url': audio_url,
+            'texto': text,
+        })
