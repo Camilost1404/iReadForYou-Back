@@ -77,10 +77,11 @@ def procesar_imagen(request):
         try:
             text = extraer_texto(image_data)
             if text != None:
+                text = text.replace('\n', ' ')
+
                 # Detectar el idioma en el que esta el texto
                 deteccion = detect(text)
                 if deteccion == 'en':
-
                     blob = TextBlob(text)
                     # Traduce desde el ingles hacia el español
                     blob = blob.translate(from_lang='en', to='es')
@@ -267,7 +268,8 @@ def audio_especifico(request):
             audio_data = speech.record(source)
             text = speech.recognize_google(audio_data, language='es')
 
-        audio_url = os.path.join(MEDIA_URL, 'audio', audio[0]).replace("\\", "/")
+        audio_url = os.path.join(
+            MEDIA_URL, 'audio', audio[0]).replace("\\", "/")
 
         return JsonResponse({
             'audio_url': audio_url,
